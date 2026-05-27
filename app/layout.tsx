@@ -74,6 +74,9 @@ export default function RootLayout({
                 <nav className="flex gap-1 flex-col md:flex-row">
                   <ActiveLink href="/">🏴‍☠️ Chat</ActiveLink>
                   <ActiveLink href="/retrieval">🐶 Retrieval</ActiveLink>
+                  <ActiveLink href="/retrieval/postgres">
+                    🗄️ Supabase RAG
+                  </ActiveLink>
                 </nav>
               </div>
             </div>

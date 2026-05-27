@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     // 创建Ollama嵌入模型
     const embeddings = new OllamaEmbeddings({
-      model: "qwen3-embedding:4b",
+      model: "qwen3-embedding:0.6b",
       baseUrl: "http://localhost:11434",
     });
 
