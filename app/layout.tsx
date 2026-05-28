@@ -77,6 +77,9 @@ export default function RootLayout({
                   <ActiveLink href="/retrieval/postgres">
                     🗄️ Supabase RAG
                   </ActiveLink>
+                  <ActiveLink href="/retrieval/local">
+                    🐘 Local PG RAG
+                  </ActiveLink>
                 </nav>
               </div>
             </div>
