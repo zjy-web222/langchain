@@ -29,7 +29,7 @@ export function SyncUser2Button() {
         toast.error(err);
       }
     } catch {
-      const err = "网络错误，请检查 Supabase 与 Ollama 是否可用";
+      const err = "网络错误，请检查 DATABASE_URL 与 Ollama 是否可用";
       setLastMessage(err);
       toast.error(err);
     } finally {
@@ -40,9 +40,8 @@ export function SyncUser2Button() {
   return (
     <form onSubmit={sync} className="flex flex-col gap-3 w-full max-w-md">
       <p className="text-sm text-muted-foreground">
-        从 Supabase 的 <code className="text-xs">user2</code>{" "}
-        表读取数据，向量化后写入 Supabase 向量表{" "}
-        <code className="text-xs">documents</code>，供下方对话检索使用。
+        通过 Prisma 从 <code className="text-xs">user2</code> 读取数据，
+        向量化后写入 <code className="text-xs">documents</code> 向量表。
       </p>
       <Button type="submit" disabled={isLoading}>
         {isLoading ? "同步中…" : "从 user2 同步到向量库"}

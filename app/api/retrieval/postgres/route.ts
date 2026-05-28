@@ -8,8 +8,9 @@ import {
   StringOutputParser,
 } from "@langchain/core/output_parsers";
 
+import { getOllamaEmbeddings } from "@/lib/db/embeddings";
+import { searchSimilarDocuments } from "@/lib/db/vector-store";
 import { answerPrompt, condenseQuestionPrompt } from "@/lib/rag/prompts";
-import { getUser2VectorStore } from "@/lib/supabase/vector-store";
 
 export const runtime = "nodejs";
 
@@ -32,7 +33,7 @@ const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
 };
 
 /**
- * 基于 Supabase 向量库（来源于 user2 表）的对话式 RAG。
+ * Prisma + Postgres pgvector：从 documents 检索 user2 来源向量并对话回答。
  */
 export async function POST(req: NextRequest) {
   try {
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       baseUrl: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434",
     });
 
-    const vectorstore = await getUser2VectorStore();
+    const embeddings = getOllamaEmbeddings();
 
     const standaloneQuestionChain = RunnableSequence.from([
       condenseQuestionPrompt,
@@ -60,18 +61,19 @@ export async function POST(req: NextRequest) {
       resolveWithDocuments = resolve;
     });
 
-    const retriever = vectorstore.asRetriever({
-      k: 20,
-      callbacks: [
-        {
-          handleRetrieverEnd(documents) {
-            resolveWithDocuments(documents);
-          },
-        },
-      ],
-    });
-
-    const retrievalChain = retriever.pipe(combineDocumentsFn);
+    const retrievalChain = async (question: string) => {
+      const queryEmbedding = await embeddings.embedQuery(question);
+      const rows = await searchSimilarDocuments(queryEmbedding, 20);
+      const docs = rows.map(
+        (row) =>
+          new Document({
+            pageContent: row.content,
+            metadata: (row.metadata ?? {}) as Record<string, unknown>,
+          }),
+      );
+      resolveWithDocuments(docs);
+      return combineDocumentsFn(docs);
+    };
 
     const answerChain = RunnableSequence.from([
       {
@@ -118,7 +120,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (e: any) {
-    console.error("Supabase retrieval error:", e);
+    console.error("Prisma retrieval error:", e);
     return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
   }
 }

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write \"app\""
+    "format": "prettier --write \"app\"",
+    "postinstall": "prisma generate"
   },
   "engines": {
     "node": ">=18"
@@ -27,7 +28,6 @@
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-popover": "^1.1.4",
     "@radix-ui/react-slot": "^1.1.1",
-    "@supabase/supabase-js": "^2.97.0",
     "@types/node": "20.12.12",
     "@types/react": "18.3.2",
     "@types/react-dom": "18.3.0",
@@ -59,7 +59,7 @@
     "eslint-config-next": "13.4.12",
     "postcss": "^8.4.31",
     "prettier": "^3.4.2",
-    "prisma": "^6.19.0",
+    "prisma": "^6.19.3",
     "tailwindcss": "3.3.3",
     "typescript": "5.1.6"
   },

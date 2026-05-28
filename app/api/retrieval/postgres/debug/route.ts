@@ -1,59 +1,68 @@
 import { NextResponse } from "next/server";
 
-import {
-  detectSupabaseKeyKind,
-  resolveSupabaseKey,
-} from "@/lib/supabase/config";
-import { getSupabaseClient, USER2_TABLE } from "@/lib/supabase/client";
+import { USER2_TABLE } from "@/lib/db/constants";
+import { getDatabaseUrl } from "@/lib/db/database-url";
+import { fetchUser2Rows } from "@/lib/db/user2";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-/** 诊断 Supabase / user2 连接（开发调试用） */
+/** 诊断 Prisma / user2 / documents 连接 */
 export async function GET() {
   try {
-    const url = process.env.SUPABASE_URL;
-    const key = resolveSupabaseKey();
-    const keyKind = key ? detectSupabaseKeyKind(key) : null;
-    const table = process.env.SUPABASE_USER2_TABLE ?? USER2_TABLE;
+    const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
+    const table = process.env.PRISMA_USER2_TABLE ?? USER2_TABLE;
 
-    if (!url || !key) {
-      return NextResponse.json({
-        ok: false,
-        error: "缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY",
-      });
+    let user2Count: number | null = null;
+    let user2Error: string | undefined;
+    let documentsCount: number | null = null;
+    let documentsError: string | undefined;
+
+    if (hasDatabaseUrl) {
+      try {
+        const { rows } = await fetchUser2Rows();
+        user2Count = rows.length;
+      } catch (e: any) {
+        user2Error = e.message;
+      }
+
+      try {
+        const result = await prisma.$queryRawUnsafe<[{ count: bigint }]>(
+          `SELECT COUNT(*)::bigint AS count FROM documents`,
+        );
+        documentsCount = Number(result[0]?.count ?? 0);
+      } catch (e: any) {
+        documentsError = e.message;
+      }
     }
 
-    let clientError: string | undefined;
-    let rowCount: number | null = null;
-    let fetchError: string | undefined;
-
+    let databaseHost: string | undefined;
     try {
-      const client = getSupabaseClient();
-      const { data, error, count } = await client
-        .from(table)
-        .select("*", { count: "exact" });
-
-      if (error) {
-        fetchError = `${error.message} (${error.code})`;
-      } else {
-        rowCount = count ?? data?.length ?? 0;
-      }
-    } catch (e: any) {
-      clientError = e.message;
+      databaseHost = hasDatabaseUrl
+        ? new URL(getDatabaseUrl()).host
+        : undefined;
+    } catch {
+      databaseHost = "invalid DATABASE_URL";
     }
 
     return NextResponse.json({
-      ok: !clientError && rowCount !== null && rowCount > 0,
-      supabaseUrl: url,
-      keyKind,
-      keyHint:
-        keyKind === "publishable" || keyKind === "anon"
-          ? "请改用 service_role key，否则 RLS 可能导致查不到 user2 数据"
+      ok: hasDatabaseUrl && user2Count !== null && user2Count > 0,
+      database: "prisma",
+      hasDatabaseUrl,
+      databaseHost,
+      usePoolerHint:
+        databaseHost?.startsWith("db.") &&
+        !databaseHost?.includes("pooler")
+          ? "若连接失败，请改用 Dashboard 的 Transaction pooler (6543)"
           : undefined,
-      table,
-      rowCount,
-      fetchError,
-      clientError,
+      user2Table: table,
+      user2Count,
+      user2Error,
+      documentsCount,
+      documentsError,
+      hint: !hasDatabaseUrl
+        ? "请配置 DATABASE_URL（Supabase → Settings → Database → Connection string）"
+        : undefined,
     });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });

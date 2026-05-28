@@ -8,8 +8,8 @@ export default function SupabaseRetrievalPage() {
       <ul>
         <li className="text-l">
           <span className="ml-2">
-            数据源：Supabase 表 <code>user2</code> → 向量表{" "}
-            <code>documents</code>（pgvector）
+            数据源：Prisma 读取 <code>user2</code> → 向量表{" "}
+            <code>documents</code>（pgvector / halfvec）
           </span>
         </li>
         <li className="text-l">

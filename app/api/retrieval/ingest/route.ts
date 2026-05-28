@@ -14,7 +14,7 @@ import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 export const runtime = "nodejs";
 
 // 运行前，请按照以下说明设置：
-// https://js.langchain.com/v0.2/docs/integrations/vectorstores/supabase
+// 本地 docx 入库（MemoryVectorStore），与 postgres/Prisma 路径无关
 
 /**
  * 此处理函数读取本地的"检索模型.docx"文件，将其分割成小块，

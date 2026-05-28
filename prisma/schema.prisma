@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma 直连 Supabase Postgres（DATABASE_URL）
+// 向量列 halfvec 通过 lib/db/vector-store.ts 中的 raw SQL 读写
 
 generator client {
   provider = "prisma-client-js"
@@ -8,15 +8,16 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+
 }
 
+/// LangChain 向量表（与 Supabase documents 表一致）
 model Document {
-  id        String   @id @default(cuid())
-  content   String
+  id        BigInt                       @id @default(autoincrement())
+  content   String?
   metadata  Json?
-  embedding Unsupported("halfvec(2560)") // qwen3-embedding:4b → 2560 dims (Supabase pgvector)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  embedding Unsupported("halfvec(2560)")?
 
   @@map("documents")
 }
