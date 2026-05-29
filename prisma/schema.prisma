@@ -1,5 +1,4 @@
-// Prisma 直连 Supabase Postgres（DATABASE_URL）
-// 向量列 halfvec 通过 lib/db/vector-store.ts 中的 raw SQL 读写
+//TODO schema未更新
 
 generator client {
   provider = "prisma-client-js"

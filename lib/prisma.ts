@@ -1,3 +1,4 @@
+/** Supabase / 云端 Postgres 的 Prisma 单例（DATABASE_URL） */
 import { PrismaClient } from "@prisma/client";
 
 import { getDatabaseUrl } from "@/lib/db/database-url";

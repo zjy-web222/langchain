@@ -1,3 +1,4 @@
+/** 本地 PostgreSQL 的 Prisma 单例（LOCAL_DATABASE_URL） */
 import { PrismaClient } from "@prisma/client";
 
 import { getLocalDatabaseUrl } from "./database-url";

@@ -2,13 +2,56 @@ import { cn } from "@/utils/cn";
 import type { Message } from "ai/react";
 import { useState, useEffect } from "react";
 
+/** 去掉 Qwen 等模型的原生 think 思考块，避免与【思考过程】重复 */
+function stripNativeThinking(content: string) {
+  const lower = content.toLowerCase();
+  const openTag = "<" + "think" + ">";
+  const closeTag = "<" + "/" + "think" + ">";
+  const openIndex = lower.indexOf(openTag);
+
+  if (openIndex === -1) {
+    return { nativeThinking: null, rest: content.trim(), inNativeThinking: false };
+  }
+
+  const closeIndex = lower.indexOf(closeTag, openIndex + openTag.length);
+  if (closeIndex !== -1) {
+    const nativeThinking =
+      content.slice(openIndex + openTag.length, closeIndex).trim() || null;
+    const rest = (
+      content.slice(0, openIndex) + content.slice(closeIndex + closeTag.length)
+    ).trim();
+    return { nativeThinking, rest, inNativeThinking: false };
+  }
+
+  const nativeThinking =
+    content.slice(openIndex + openTag.length).trim() || null;
+  return {
+    nativeThinking,
+    rest: content.slice(0, openIndex).trim(),
+    inNativeThinking: true,
+  };
+}
+
 function parseMessageContent(content: string) {
-  const thinkingMatch = content.match(/【思考过程】([\s\S]*?)(?=【最终回复】|$)/);
-  const finalMatch = content.match(/【最终回复】([\s\S]*)/);
-  
-  const thinking = thinkingMatch ? thinkingMatch[1].trim() : null;
-  const final = finalMatch ? finalMatch[1].trim() : content;
-  
+  const { nativeThinking, rest, inNativeThinking } =
+    stripNativeThinking(content);
+
+  const thinkingMatch = rest.match(/【思考过程】([\s\S]*?)(?=【最终回复】|$)/);
+  const finalMatch = rest.match(/【最终回复】([\s\S]*)/);
+
+  const structuredThinking = thinkingMatch?.[1]?.trim() || null;
+  const thinking = structuredThinking || nativeThinking;
+
+  let final: string;
+  if (finalMatch) {
+    final = finalMatch[1].trim();
+  } else if (thinkingMatch || inNativeThinking) {
+    // 仍在输出思考过程时，不要把整段内容再显示到「最终回复」区域
+    final = "";
+  } else {
+    final = rest;
+  }
+
   return { thinking, final };
 }
 
@@ -63,7 +106,8 @@ export function ChatMessageBubble(props: {
           </div>
         )}
         
-        {/* 最终回复 */}
+        {/* 最终回复：思考阶段尚未开始时不要渲染空块，避免与上方思考区重复 */}
+        {(!thinking || final.length > 0) && (
         <div className={`${thinking ? "p-4 bg-white dark:bg-gray-900 rounded-xl border-l-4 border-green-500 shadow-md transition-all duration-300 ease-in-out" : ""}`}>
           {thinking && isComplete && (
             <div className="text-xs font-semibold text-green-600 dark:text-green-400 mb-3 flex items-center">
@@ -73,6 +117,7 @@ export function ChatMessageBubble(props: {
           )}
           <span className={`${thinking ? "text-base leading-relaxed" : ""}`}>{final}</span>
         </div>
+        )}
 
         {/* 来源信息 */}
         {props.sources && props.sources.length ? (

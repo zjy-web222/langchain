@@ -1,3 +1,7 @@
+/**
+ * Supabase 向量库读写（Prisma raw SQL + halfvec）
+ * 供 /api/retrieval/postgres 使用
+ */
 import type { Document } from "@langchain/core/documents";
 import type { EmbeddingsInterface } from "@langchain/core/embeddings";
 

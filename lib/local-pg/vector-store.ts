@@ -1,3 +1,7 @@
+/**
+ * 本地 Postgres 向量库读写（独立连接 LOCAL_DATABASE_URL）
+ * 供 /api/retrieval/local 使用
+ */
 import type { Document } from "@langchain/core/documents";
 import type { EmbeddingsInterface } from "@langchain/core/embeddings";
 

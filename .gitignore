@@ -24,8 +24,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# local env
+.env
 .env*.local
+
+# generated vector cache
+/vectorstore/
 
 # vercel
 .vercel

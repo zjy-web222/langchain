@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 
 import { ChatOllama } from "@langchain/ollama";
-import { OllamaEmbeddings } from "@langchain/ollama";
+import { getOllamaEmbeddings } from "@/lib/db/embeddings";
+import { getLocalVectorstorePath } from "@/lib/rag/local-readme";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { MemoryVectorStore } from "@langchain/classic/vectorstores/memory";
 import { Document } from "@langchain/core/documents";
@@ -101,24 +102,15 @@ export async function POST(req: NextRequest) {
     const currentMessageContent = messages[messages.length - 1].content;
 
     const model = new ChatOllama({
-      model: "qwen3:4b",
-      temperature: 0.1, // 降低温度，提高回答的准确性和一致性
-      baseUrl: "http://localhost:11434",
+      model: process.env.OLLAMA_CHAT_MODEL ?? "qwen3:4b",
+      temperature: 0.1,
+      baseUrl: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434",
     });
 
-    // 导入fs模块用于文件操作
-    const fs = require('fs');
-    const path = require('path');
+    const fs = require("fs");
 
-    // 创建Ollama嵌入模型
-    const embeddings = new OllamaEmbeddings({
-      model: "qwen3-embedding:0.6b",
-      baseUrl: "http://localhost:11434",
-    });
-
-    // 从本地文件加载向量存储
-    const vectorstorePath = path.join(process.cwd(), 'vectorstore');
-    const documentsPath = path.join(vectorstorePath, 'documents.json');
+    const embeddings = getOllamaEmbeddings();
+    const documentsPath = getLocalVectorstorePath();
     
     let vectorstore;
     if (fs.existsSync(documentsPath)) {
